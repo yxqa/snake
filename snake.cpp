@@ -27,7 +27,10 @@ int endgamestatus = 0;      //ÓÎÏ·½áÊøµÄÇé¿ö£¬1£º×²µ½Ç½£»2£ºÒ§µ½×Ô¼º£»3£ºÖ÷¶¯ÍË³
 char u_name[8];         //ÕıÔÚÓÎÍæµÄÓÃ»§Ãû³Æ
 int ID = 0;         //ÕıÔÚÓÎÍæµÄÓÃ»§ID
 int logView = 0;        //ÈÕÖ¾ÇĞ»»
-time_t startTime = 0;       //
+//int logText = 0;        //ÈÕÖ¾ÎÄ±¾
+time_t startTime = 0;       //¿ªÊ¼Ê±¼ä
+//time_t endTime = 0;         //ÓÎÏ·½áÊøÊ±¼ä
+//int ganmeTime = 0;        //ÓÎÏ·Ê±³¤(Ãë)
 
 //ÉùÃ÷È«²¿º¯Êı//
 void Pos();
@@ -50,40 +53,91 @@ void Login();       //ÈÕÖ¾
 
 void zhuce()
 {
-    char user[8], password[8];
-    int id;
-    srand((unsigned)time(NULL));
-    id = rand() % 1000 + 100;
-
     FILE* fp = NULL;
-    fp = fopen("text.txt", "a+");
+	char line[100]; //´æ´¢Ã¿Ò»ĞĞ
+    char user[8], password[8];
+	char tmp_user[8], tmp_password[8];
+    int id;
+	int tmp_id;
+    int index = 0;
+    srand((unsigned)time(NULL));
 
-    if (fp == NULL)
+
+    while (1)
     {
-        printf("ERROR!");
-        exit(0);
+        int user_index = 0;
+        fp = fopen("text.txt", "a+");
+
+        if (fp == NULL)
+        {
+            printf("ERROR!");
+            exit(0);
+        }
+        else
+        {
+            printf("ÎÄ¼ş´ò¿ª³É¹¦");
+        }
+
+        system("pause");
+        system("cls");
+
+        printf("ÊäÈëÕËºÅ£º");
+        scanf("%7s", user);
+
+		//¼ìÑéÕËºÅÊÇ·ñ´æÔÚ
+        while (fgets(line, sizeof(line), fp))
+        {
+            if (sscanf(line, "id:%d\tname:%7s\tpass:%7s", &tmp_id, tmp_user, tmp_password) == 3)
+            {
+                if (strcmp(user, tmp_user) == 0)
+                {
+                    user_index = 1;
+                    break;
+                }
+            }
+        }
+        fclose(fp);
+
+        if (user_index)
+        {
+            printf("ÕËºÅÒÑ´æÔÚ£¬ÇëÖØĞÂÊäÈë£¡\n");
+            continue;
+        }
+        else
+        {
+            break;
+        }
     }
-    else
-    {
-        printf("ÎÄ¼ş´ò¿ª³É¹¦");
-    }
-
-    system("pause");
-    system("cls");
-
-    printf("ÊäÈëÕËºÅ£º");
-    scanf("%7s", user);
-    //fgets(user, sizeof(user), stdin);
-
     printf("ÊäÈëÃÜÂë£º");
     scanf("%7s", password);
-    //fgets(password, sizeof(password), stdin);
 
+
+    //Éú³ÉidÎ¨Ò»ĞÔ
+    while (!index)
+    {
+        id = rand() % 1000 + 100;
+		fp = fopen("text.txt", "a+");
+        index = 1;
+        while (fgets(line, sizeof(line), fp))
+        {
+			if (sscanf(line, "id:%d\tname:%7s\tpass:%7s", &tmp_id, tmp_user, tmp_password) == 3)
+			{
+				if (id == tmp_id)
+				{
+					index = 0;
+					break;
+				}
+			}
+        }
+		fclose(fp);
+    }
+	fp = fopen("text.txt", "a+");
     fprintf(fp, "id:%d\tname:%s\tpass:%s\t\n", id, user, password);
     fclose(fp);
 
     system("cls");
     welcometogame();
+    
 
 }
 
@@ -146,9 +200,9 @@ void Login()
     time_t nowTime = time(NULL);
     int pass = (int)(nowTime - startTime);
     int hours = pass / 3600;
-    int min = (pass % 3600) / 60;
+	int min = (pass % 3600) / 60;
     int sec = pass % 60;
-    if (logView)
+    if (logView == 1)
     {
         Pos(64, 2);
         printf("ÓÃ»§Ãû£º%s", u_name);
@@ -161,13 +215,37 @@ void Login()
         Pos(64, 6);
         printf("ÓÎÏ·Ê±³¤£º%02d:%02d:%02d", hours, min, sec);
     }
-    else
+    else if (logView == 0)
     {
         for (int i = 2;i <= 6;i++)
         {
             Pos(64, i);
             printf("                       ");
         }
+    }
+
+    if (logView == 2)
+    {
+        FILE* fp = NULL;
+		fp = fopen("login.txt", "a+");
+        if (fp == NULL)
+        {
+            printf("ÎÄ¼ş´ò¿ªÊ§°Ü£¬ÎŞ·¨´æÈëÈÕÖ¾");
+            return;
+        }
+		fprintf(fp, "ÓÃ»§Ãû£º%s\n", u_name);
+		fprintf(fp, "ÓÃ»§ID£º%d\n", ID);
+		fprintf(fp, "µÃ·Ö£º%d\n", score);
+		fprintf(fp, "%s\n", buf);
+		fprintf(fp, "ÓÎÏ·Ê±³¤£º%02d:%02d:%02d\n", hours, min, sec);
+		fprintf(fp, "-----------------------------------\n");
+		fclose(fp);
+        Pos(24, 14);
+		printf("ÈÕÖ¾ÒÑ´æÈëlogin.txtÎÄ¼şÖĞ");
+		system("pause");
+
+
+
     }
     
 }
@@ -560,7 +638,6 @@ void welcometogame()//¿ªÊ¼½çÃæ
 
 void endgame()//½áÊøÓÎÏ·
 {
-
     system("cls");
     Pos(24, 12);
     if (endgamestatus == 1)
@@ -577,6 +654,9 @@ void endgame()//½áÊøÓÎÏ·
     }
     Pos(24, 13);
     printf("ÄúµÄµÃ·ÖÊÇ%d\n", score);
+    logView = 2;
+    Login();
+
     exit(0);
 }
 
@@ -587,8 +667,8 @@ void gamestart()//ÓÎÏ·³õÊ¼»¯
     creatMap();
     initsnake();
     createfood();
-
     startTime = time(NULL);
+
 }
 
 int main()
