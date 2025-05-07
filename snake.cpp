@@ -51,6 +51,17 @@ int YanZheng();     //验证函数
 void Login();       //日志
 
 
+
+void Pos(int x, int y)//设置光标位置
+{
+    COORD pos;
+    HANDLE hOutput;
+    pos.X = x;
+    pos.Y = y;
+    hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleCursorPosition(hOutput, pos);
+}
+
 void zhuce()
 {
     FILE* fp = NULL;
@@ -73,14 +84,10 @@ void zhuce()
             printf("ERROR!");
             exit(0);
         }
-        else
-        {
-            printf("文件打开成功");
-        }
-
-        system("pause");
+        //system("pause");
         system("cls");
 
+        Pos(40, 5);
         printf("输入账号：");
         scanf("%7s", user);
 
@@ -108,6 +115,7 @@ void zhuce()
             break;
         }
     }
+    Pos(40, 6);
     printf("输入密码：");
     scanf("%7s", password);
 
@@ -150,8 +158,12 @@ int YanZheng()
     char inputUser[8], inputPass[8];
     char user[8], password[8];
     int id = 0;
+
+    Pos(40, 5);
     printf("账号：");
     scanf("%7s", inputUser);
+
+    Pos(40, 6);
     printf("密码：");
     scanf("%7s", inputPass);
 
@@ -179,16 +191,6 @@ int YanZheng()
 
 }
 
-
-void Pos(int x, int y)//设置光标位置
-{
-    COORD pos;
-    HANDLE hOutput;
-    pos.X = x;
-    pos.Y = y;
-    hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleCursorPosition(hOutput, pos);
-}
 
 void Login()
 {
@@ -220,7 +222,7 @@ void Login()
         for (int i = 2;i <= 6;i++)
         {
             Pos(64, i);
-            printf("                       ");
+            printf("                                    ");
         }
     }
 
@@ -241,7 +243,7 @@ void Login()
 		fprintf(fp, "-----------------------------------\n");
 		fclose(fp);
         Pos(24, 14);
-		printf("日志已存入login.txt文件中");
+		printf("日志已存入login.txt文件中\n");
 		system("pause");
 
 
@@ -308,31 +310,71 @@ int biteself()//判断是否咬到了自己
     return 0;
 }
 
-void createfood()//随机出现食物
+//void createfood()//随机出现食物
+//{
+//    snake* food_1;
+//    srand((unsigned)time(NULL));
+//    food_1 = (snake*)malloc(sizeof(snake));
+//    while ((food_1->x % 2) != 0 || food_1->x < 2 || food_1->x > 53 || food_1->y < 1 || food_1->y > 25)    //保证其为偶数，使得食物能与蛇头对其
+//    {
+//        food_1->x = rand() % 52 + 2;
+//        food_1->y = rand() % 24 + 1;
+//    }
+//
+//    q = head;
+//    while (q->next != NULL)
+//    {
+//        if (q->x == food_1->x && q->y == food_1->y) //判断蛇身是否与食物重合
+//        {
+//            free(food_1);
+//            createfood();
+//        }
+//        q = q->next;
+//    }
+//    Pos(food_1->x, food_1->y);
+//    food = food_1;
+//    printf("■");
+//
+//}
+
+void createfood() // 优化版
 {
-    snake* food_1;
-    srand((unsigned)time(NULL));
-    food_1 = (snake*)malloc(sizeof(snake));
-    while ((food_1->x % 2) != 0 || food_1->x < 2 || food_1->x > 53 || food_1->y < 1 || food_1->y > 25)    //保证其为偶数，使得食物能与蛇头对其
-    {
-        food_1->x = rand() % 52 + 2;
-        food_1->y = rand() % 24 + 1;
-    }
+    int empty_count = 0;
+    typedef struct { int x, y; } pos;
+    pos empty[1000]; // 理论上足够
+    int i, j, is_snake, x, y;
+    snake* p;
 
-    q = head;
-    while (q->next != NULL)
-    {
-        if (q->x == food_1->x && q->y == food_1->y) //判断蛇身是否与食物重合
-        {
-            free(food_1);
-            createfood();
+    // 1. 扫描全地图，把不被蛇占的点全找出来
+    for (x = 2; x <= 54; x += 2) {     // 假设地图横坐标 [2,54]
+        for (y = 1; y <= 25; ++y) {    // 纵坐标 [1,25]
+            // 判断(x, y)是否被蛇身占用
+            is_snake = 0;
+            for (p = head; p != NULL; p = p->next) {
+                if (p->x == x && p->y == y) {
+                    is_snake = 1;
+                    break;
+                }
+            }
+            if (!is_snake) {
+                empty[empty_count].x = x;
+                empty[empty_count].y = y;
+                ++empty_count;
+            }
         }
-        q = q->next;
     }
-    Pos(food_1->x, food_1->y);
-    food = food_1;
-    printf("■");
+    // 2. 如果没有空位，就不用生成食物了
+    if (empty_count == 0) return;
+    // 3. 随机挑一个空点
+    int idx = rand() % empty_count;
+    if (food) free(food);
+    food = (snake*)malloc(sizeof(snake));
+    food->x = empty[idx].x;
+    food->y = empty[idx].y;
+    food->next = NULL;
 
+    Pos(food->x, food->y);
+    printf("■");
 }
 
 void cantcrosswall()//不能穿墙
@@ -610,7 +652,7 @@ void welcometogame()//开始界面
     Pos(25, 13);
     printf("加速将能得到更高的分数。\n");
     //system("pause");
-    printf("请输入接下来的操作");
+    printf("请输入接下来的操作:");
     scanf_s("%d", &n);
     switch (n)
     {
@@ -619,7 +661,8 @@ void welcometogame()//开始界面
         return;
     case 2:
         system("cls");
-        printf("游玩前请先输入账号密码进行验证：");
+        Pos(30, 3);
+        printf("/**** 游玩前请先输入账号密码进行验证! ****/");
         tmp = YanZheng();
         if (tmp == 1)
         {
